@@ -51,17 +51,15 @@ public class InvoiceController {
             @RequestPart("file") MultipartFile file,
             @RequestPart("email") String customerEmail) {
 
-        System.out.println("EMAIL RECEIVED: " + customerEmail);
-
         if (customerEmail == null || !customerEmail.contains("@")) {
             return ResponseEntity.badRequest().body("Invalid email address");
         }
 
         try {
-            emailService.sendInvoiceEmail(customerEmail, file);
+            emailService.sendInvoiceEmail(customerEmail, file); // <-- likely failing
             return ResponseEntity.ok("Invoice sent successfully!");
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // check logs here
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to send invoice");
         }
