@@ -4,6 +4,7 @@ import in.kanimozhi.invoicegeneratorapi.security.ClerkJwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,23 +20,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final ClerkJwtAuthFilter jwtAuthFilter;
+    private final ClerkJwtAuthFilter clerkJwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // 🔥 VERY IMPORTANT FOR MULTIPART
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Public endpoints
                         .requestMatchers(
                                 "/",
                                 "/error",
                                 "/api/webhooks/**",
                                 "/api/auth/**"
                         ).permitAll()
+
+                        // 🔥 PROTECT ALL INVOICE APIs (JWT REQUIRED)
+                        .requestMatchers("/api/invoices/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .addFilterBefore(
+                        clerkJwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
@@ -43,15 +59,22 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://invoice-generator-dusky-beta.vercel.app"
+                "https://invoice-generator-6.vercel.app"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+        config.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
         return source;
     }
