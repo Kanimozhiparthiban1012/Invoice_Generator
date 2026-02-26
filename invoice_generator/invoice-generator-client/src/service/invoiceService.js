@@ -11,7 +11,17 @@ export const deleteInvoice = (baseURL, id, token) => {
     return axios.delete(`${baseURL}/invoices/${id}`, {headers: {Authorization: `Bearer ${token}`}});
 }
 
-export const sendInvoice = (baseURL, formData, token) => {
-    return axios.post(`${baseURL}/invoices/sendinvoice`, formData, {headers: {Authorization: `Bearer ${token}`}});
-}
+
+export const sendInvoice = (baseURL, file, customerEmail, token) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("email", customerEmail);
+
+    return axios.post(`${baseURL}/invoices/sendinvoice`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`, // keep JWT header
+            // Do NOT manually set Content-Type; Axios sets it automatically for multipart
+        },
+    });
+};
 
