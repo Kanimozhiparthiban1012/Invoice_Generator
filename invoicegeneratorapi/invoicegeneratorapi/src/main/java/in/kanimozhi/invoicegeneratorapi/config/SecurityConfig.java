@@ -28,14 +28,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/",
-                                "/error",
+                                "/", "/error",
                                 "/api/webhooks/**",
                                 "/api/auth/**",
-                                "/api/invoices/**", // allow OPTIONS preflight for invoices
-                                "/api/users/**",
-                                "/api/invoices/sendinvoice" // <-- add this
+                                "/api/invoices/sendinvoice" // only public endpoint
                         ).permitAll()
+                        .requestMatchers("/api/invoices/**").authenticated() // secure all other invoices
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
