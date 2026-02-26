@@ -10,7 +10,8 @@ import in.kanimozhi.invoicegeneratorapi.service.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "https://invoice-generator-6.vercel.app")
 @RestController
