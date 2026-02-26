@@ -4,7 +4,6 @@ import in.kanimozhi.invoicegeneratorapi.security.ClerkJwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,21 +27,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-
-                        // ✅ Public endpoints
                         .requestMatchers(
                                 "/",
                                 "/error",
                                 "/api/webhooks/**",
                                 "/api/auth/**"
                         ).permitAll()
-
-                        // ✅ Authenticated user endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/invoices/sendinvoice").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/invoices/**").authenticated()
-                        .requestMatchers("/api/invoices/**").authenticated()
-
-                        // ❌ Everything else blocked
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

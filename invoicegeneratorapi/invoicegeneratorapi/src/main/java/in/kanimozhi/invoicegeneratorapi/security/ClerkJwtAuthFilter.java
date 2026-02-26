@@ -33,6 +33,12 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        // 🔥 VERY IMPORTANT
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return true;
+        }
 
         return path.equals("/")
                 || path.startsWith("/error")
@@ -49,19 +55,17 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
+        // 🔥 DO NOT BLOCK HERE
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Authorization header missing");
+            filterChain.doFilter(request, response);
             return;
         }
 
         try {
             String token = authHeader.substring(7);
 
-            // Decode JWT header
-            String headerJson = new String(
-                    Base64.getUrlDecoder().decode(token.split("\\.")[0])
-            );
-
+            String[] chunks = token.split("\\.");
+            String headerJson = new String(Base64.getUrlDecoder().decode(chunks[0]));
             ObjectMapper mapper = new ObjectMapper();
             JsonNode headerNode = mapper.readTree(headerJson);
             String kid = headerNode.get("kid").asText();
@@ -81,16 +85,14 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(
                             clerkUserId,
                             null,
-                            Collections.singletonList(
-                                    new SimpleGrantedAuthority("ROLE_USER")
-                            )
+                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid JWT token");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid JWT");
         }
     }
 }
