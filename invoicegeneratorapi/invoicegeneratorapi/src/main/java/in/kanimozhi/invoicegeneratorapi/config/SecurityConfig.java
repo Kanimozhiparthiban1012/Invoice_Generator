@@ -4,6 +4,7 @@ import in.kanimozhi.invoicegeneratorapi.security.ClerkJwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -27,15 +28,21 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // public endpoints
+
+                        // ✅ Public endpoints
                         .requestMatchers(
-                                "/", "/error",
+                                "/",
+                                "/error",
                                 "/api/webhooks/**",
-                                "/api/auth/**",
-                                "/api/invoices/sendinvoice" // allow sendInvoice temporarily
+                                "/api/auth/**"
                         ).permitAll()
-                        // secure all other invoice routes
+
+                        // ✅ Authenticated user endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/invoices/sendinvoice").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/invoices/**").authenticated()
                         .requestMatchers("/api/invoices/**").authenticated()
+
+                        // ❌ Everything else blocked
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -47,10 +54,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "http://localhost:5173", // local frontend
-                "https://invoice-generator-6.vercel.app" // deployed frontend
+                "http://localhost:5173",
+                "https://invoice-generator-6.vercel.app"
         ));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
