@@ -35,7 +35,6 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // 🔥 VERY IMPORTANT
         if ("OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
@@ -54,8 +53,7 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-
-        // 🔥 DO NOT BLOCK HERE
+        // If no token → continue chain (do NOT block)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -64,12 +62,14 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
         try {
             String token = authHeader.substring(7);
 
+            // Decode JWT header to get kid
             String[] chunks = token.split("\\.");
             String headerJson = new String(Base64.getUrlDecoder().decode(chunks[0]));
             ObjectMapper mapper = new ObjectMapper();
             JsonNode headerNode = mapper.readTree(headerJson);
             String kid = headerNode.get("kid").asText();
 
+            // Get public key from Clerk JWKS
             PublicKey publicKey = jwksProvider.getPublicKey(kid);
 
             Claims claims = Jwts.parserBuilder()
@@ -85,14 +85,18 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(
                             clerkUserId,
                             null,
-                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                            Collections.singletonList(
+                                    new SimpleGrantedAuthority("ROLE_USER")
+                            )
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid JWT");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("Invalid or expired JWT");
         }
     }
 }
