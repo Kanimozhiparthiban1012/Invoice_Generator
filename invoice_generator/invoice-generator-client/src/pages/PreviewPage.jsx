@@ -108,18 +108,18 @@ const PreviewPage = () => {
 
     const handleSendEmail = async () => {
         if (!previewRef.current || !customerEmail) {
-            return toast.error("Please enter a valid email and try again.");
+            return toast.error("Please enter a valid email");
         }
 
         try {
             setEmailing(true);
 
-            // Generate the PDF blob
+            // Generate PDF as Blob
             const pdfBlob = await generatePdfFromElement(
                 previewRef.current,
                 `invoice_${Date.now()}.pdf`,
                 true
-            ); // add `returnBlob=true` in your utils
+            );
 
             const formData = new FormData();
             formData.append("file", pdfBlob);
@@ -133,11 +133,10 @@ const PreviewPage = () => {
                 toast.success("Email sent successfully!");
                 setShowModal(false);
                 setCustomerEmail("");
-            } else {
-                toast.error("Failed to send email.");
             }
         } catch (error) {
-            toast.error("Something went wrong while sending email.", error.message);
+            console.error(error);
+            toast.error("Failed to send email");
         } finally {
             setEmailing(false);
         }
