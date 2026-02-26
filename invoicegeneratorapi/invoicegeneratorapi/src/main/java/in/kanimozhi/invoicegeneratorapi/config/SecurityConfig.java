@@ -37,13 +37,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/webhooks/**").permitAll()
-
-                        // other public endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/", "/error", "/api/").permitAll()
-                        // everything else secured
-                        .anyRequest().permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/error",
+                                "/api/webhooks/**",
+                                "/api/auth/**"
+                        ).permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -57,7 +57,7 @@ public class SecurityConfig {
 
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "https://*.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
