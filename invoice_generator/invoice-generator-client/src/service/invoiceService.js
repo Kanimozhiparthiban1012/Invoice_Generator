@@ -1,29 +1,23 @@
 import axios from "axios";
 
-const authHeaders = (token) => {
-    if (!token) {
-        throw new Error("JWT token missing");
-    }
-    return { Authorization: `Bearer ${token}` };
-};
+const authHeaders = (token) => ({
+    Authorization: `Bearer ${token}`,
+});
 
-export const saveInvoice = (baseURL, payload, token) => {
-    return axios.post(`${baseURL}/invoices`, payload, {
+export const saveInvoice = (baseURL, payload, token) =>
+    axios.post(`${baseURL}/invoices`, payload, {
         headers: authHeaders(token),
     });
-};
 
-export const getAllInvoices = (baseURL, token) => {
-    return axios.get(`${baseURL}/invoices`, {
+export const getAllInvoices = (baseURL, token) =>
+    axios.get(`${baseURL}/invoices`, {
         headers: authHeaders(token),
     });
-};
 
-export const deleteInvoice = (baseURL, id, token) => {
-    return axios.delete(`${baseURL}/invoices/${id}`, {
+export const deleteInvoice = (baseURL, id, token) =>
+    axios.delete(`${baseURL}/invoices/${id}`, {
         headers: authHeaders(token),
     });
-};
 
 export const sendInvoice = (baseURL, file, customerEmail, token) => {
     const formData = new FormData();
