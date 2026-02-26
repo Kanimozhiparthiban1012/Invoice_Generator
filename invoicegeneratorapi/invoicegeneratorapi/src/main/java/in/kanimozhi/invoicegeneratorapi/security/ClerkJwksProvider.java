@@ -22,27 +22,22 @@ public class ClerkJwksProvider {
 
     private final Map<String, PublicKey> keyCache = new HashMap<>();
     private long lastFetchTime = 0;
-    private static final long CACHE_TTL = 3600_000; // 1 hour in ms
+    private static final long CACHE_TTL = 3600000; // 1 hour
 
     public PublicKey getPublicKey(String kid) throws Exception {
-        // return cached key if not expired
         if (keyCache.containsKey(kid) && System.currentTimeMillis() - lastFetchTime < CACHE_TTL) {
             return keyCache.get(kid);
         }
 
         refreshKeys();
-        if (!keyCache.containsKey(kid)) {
-            throw new RuntimeException("No public key found for kid: " + kid);
-        }
-
         return keyCache.get(kid);
     }
 
     private void refreshKeys() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jwks = mapper.readTree(new URL(jwksUrl));
-        JsonNode keys = jwks.get("keys");
 
+        JsonNode keys = jwks.get("keys");
         for (JsonNode keyNode : keys) {
             String kid = keyNode.get("kid").asText();
             String kty = keyNode.get("kty").asText();
@@ -56,19 +51,19 @@ public class ClerkJwksProvider {
                 keyCache.put(kid, publicKey);
             }
         }
-
         lastFetchTime = System.currentTimeMillis();
     }
 
-    private PublicKey createPublicKey(String modulusBase64, String exponentBase64) throws Exception {
-        byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
-        byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
+    private PublicKey createPublicKey(String modulus, String exponent) throws Exception {
+        byte[] modulusBytes = Base64.getUrlDecoder().decode(modulus);
+        byte[] exponentBytes = Base64.getUrlDecoder().decode(exponent);
 
-        BigInteger modulus = new BigInteger(1, modulusBytes);
-        BigInteger exponent = new BigInteger(1, exponentBytes);
+        BigInteger modulusBigInt = new BigInteger(1, modulusBytes);
+        BigInteger exponentBigInt = new BigInteger(1, exponentBytes);
 
-        RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(spec);
+        RSAPublicKeySpec spec = new RSAPublicKeySpec(modulusBigInt, exponentBigInt);
+        KeyFactory factory = KeyFactory.getInstance("RSA");
+
+        return factory.generatePublic(spec);
     }
 }
