@@ -1,11 +1,12 @@
 package in.kanimozhi.invoicegeneratorapi.service;
 
 import in.kanimozhi.invoicegeneratorapi.entity.Invoice;
-import org.springframework.stereotype.Service;
 import in.kanimozhi.invoicegeneratorapi.repository.InvoiceRepository;
-import java.util.List;
-@Service
+import org.springframework.stereotype.Service;
 
+import java.util.List;
+
+@Service
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
@@ -14,18 +15,21 @@ public class InvoiceService {
         this.invoiceRepository = invoiceRepository;
     }
 
-    public Invoice saveInvoice(Invoice invoice){
+    public Invoice saveInvoice(Invoice invoice) {
         return invoiceRepository.save(invoice);
     }
 
-    public List<Invoice> fetchInvoices(String clerkId){
+    public List<Invoice> fetchInvoices(String clerkId) {
         return invoiceRepository.findByClerkId(clerkId);
     }
 
-    public void removeInvoice(String invoiceId, String clerkId){
-        Invoice existingInvoice = invoiceRepository.findByClerkIdAndId(clerkId, invoiceId)
-                .orElseThrow(() -> new RuntimeException(("Invoice not found: "+invoiceId)));
+    // ✅ CORRECT ORDER: clerkId FIRST, invoiceId SECOND
+    public void removeInvoice(String clerkId, String invoiceId) {
+        Invoice existingInvoice = invoiceRepository
+                .findByClerkIdAndId(clerkId, invoiceId)
+                .orElseThrow(() ->
+                        new RuntimeException("Invoice not found or unauthorized"));
+
         invoiceRepository.delete(existingInvoice);
     }
-
 }

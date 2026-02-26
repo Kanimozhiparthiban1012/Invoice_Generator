@@ -1,8 +1,8 @@
 package in.kanimozhi.invoicegeneratorapi.controller;
 
 import in.kanimozhi.invoicegeneratorapi.entity.Invoice;
-import in.kanimozhi.invoicegeneratorapi.service.InvoiceService;
 import in.kanimozhi.invoicegeneratorapi.service.EmailService;
+import in.kanimozhi.invoicegeneratorapi.service.InvoiceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,30 +26,40 @@ public class InvoiceController {
     }
 
     @PostMapping
-    public ResponseEntity<Invoice> saveInvoice(@RequestBody Invoice invoice) {
-        System.out.println("INVOICE RECEIVED: " + invoice);
+    public ResponseEntity<Invoice> saveInvoice(
+            @RequestBody Invoice invoice,
+            Authentication authentication
+    ) {
+        invoice.setClerkId(authentication.getName());
         return ResponseEntity.ok(invoiceService.saveInvoice(invoice));
     }
 
     @GetMapping
     public ResponseEntity<List<Invoice>> fetchInvoices(Authentication authentication) {
-        return ResponseEntity.ok(invoiceService.fetchInvoices(authentication.getName()));
+        return ResponseEntity.ok(
+                invoiceService.fetchInvoices(authentication.getName())
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> removeInvoice(@PathVariable String id, Authentication authentication){
-        if (authentication.getName() != null) {
-            invoiceService.removeInvoice(authentication.getName(), id);
-            return ResponseEntity.noContent().build();
-        }
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                "User does not have permission to access this resource");
+    public ResponseEntity<Void> removeInvoice(
+            @PathVariable String id,
+            Authentication authentication
+    ) {
+        invoiceService.removeInvoice(authentication.getName(), id);
+        return ResponseEntity.noContent().build();
     }
 
+    // ✅ AUTHENTICATION ADDED
     @PostMapping("/sendinvoice")
     public ResponseEntity<?> sendInvoice(
             @RequestPart("file") MultipartFile file,
-            @RequestPart("email") String customerEmail) {
+            @RequestPart("email") String customerEmail,
+            Authentication authentication
+    ) {
+        if (authentication == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+        }
 
         if (customerEmail == null || !customerEmail.contains("@")) {
             return ResponseEntity.badRequest().body("Invalid email address");
