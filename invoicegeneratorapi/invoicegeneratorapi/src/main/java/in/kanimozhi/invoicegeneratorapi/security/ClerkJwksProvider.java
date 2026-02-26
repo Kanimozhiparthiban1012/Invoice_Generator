@@ -17,7 +17,7 @@ import java.util.Map;
 @Component
 public class ClerkJwksProvider {
 
-    @Value("${clerk.jwks-url}")
+    @Value("${clerk.jwks.url}")
     private String jwksUrl;
 
     private final Map<String, PublicKey> keyCache = new HashMap<>();
