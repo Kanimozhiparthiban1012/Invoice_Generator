@@ -1,5 +1,5 @@
 import { createContext, useState } from "react";
-
+/* eslint-disable react-refresh/only-export-components */
 export const AppContext = createContext();
 
 export const initialInvoiceData = {
@@ -20,7 +20,7 @@ export const AppContextProvider = ({ children }) => {
     const [invoiceData, setInvoiceData] = useState(initialInvoiceData);
     const [selectedTemplate, setSelectedTemplate] = useState("template1");
 
-    const baseURL = "http://localhost:8080/api";
+    const baseURL = "https://invoice-backend.onrender.com/api";
 
     const contextValue = {
         invoiceData,
