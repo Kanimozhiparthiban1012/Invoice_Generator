@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 
-//@CrossOrigin("http://localhost:5173")
+@CrossOrigin(origins = "https://invoice-generator-6.vercel.app")
 @RestController
 @RequestMapping("/api/invoices")
 public class InvoiceController {
