@@ -2,18 +2,16 @@ package in.kanimozhi.invoicegeneratorapi.controller;
 
 import in.kanimozhi.invoicegeneratorapi.entity.Invoice;
 import in.kanimozhi.invoicegeneratorapi.service.InvoiceService;
-import org.springframework.security.core.Authentication;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import in.kanimozhi.invoicegeneratorapi.service.EmailService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RestController;
 
-@CrossOrigin(origins = "https://invoice-generator-6.vercel.app")
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/invoices")
 public class InvoiceController {
@@ -29,7 +27,7 @@ public class InvoiceController {
 
     @PostMapping
     public ResponseEntity<Invoice> saveInvoice(@RequestBody Invoice invoice) {
-        System.out.println("INVOICE RECEIVED  " + invoice);
+        System.out.println("INVOICE RECEIVED: " + invoice);
         return ResponseEntity.ok(invoiceService.saveInvoice(invoice));
     }
 
@@ -53,12 +51,10 @@ public class InvoiceController {
             @RequestPart("file") MultipartFile file,
             @RequestPart("email") String customerEmail) {
 
-        System.out.println("EMAIL RECEIVED = [" + customerEmail + "]");
+        System.out.println("EMAIL RECEIVED: " + customerEmail);
 
         if (customerEmail == null || !customerEmail.contains("@")) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Invalid email address");
+            return ResponseEntity.badRequest().body("Invalid email address");
         }
 
         try {
@@ -66,8 +62,7 @@ public class InvoiceController {
             return ResponseEntity.ok("Invoice sent successfully!");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to send invoice");
         }
     }
