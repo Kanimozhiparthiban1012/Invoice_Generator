@@ -33,7 +33,8 @@ public class SecurityConfig {
                                 "/api/webhooks/**",
                                 "/api/auth/**",
                                 "/api/invoices/**", // allow OPTIONS preflight for invoices
-                                "/api/users/**"
+                                "/api/users/**",
+                                "/api/invoices/sendinvoice" // <-- add this
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
