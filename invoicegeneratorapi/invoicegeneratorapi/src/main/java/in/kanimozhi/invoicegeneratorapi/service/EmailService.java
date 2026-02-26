@@ -20,17 +20,21 @@ public class EmailService {
     ) throws Exception {
 
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        MimeMessageHelper helper =
+                new MimeMessageHelper(message, true);
 
         helper.setTo(customerEmail);
         helper.setSubject("Your Invoice");
         helper.setText(
                 "Hello,\n\nPlease find your invoice attached.\n\nSent by user: "
-                        + clerkUserId
-                        + "\n\nThank you."
+                        + clerkUserId +
+                        "\n\nThank you."
         );
 
-        helper.addAttachment(file.getOriginalFilename(), file);
+        helper.addAttachment(
+                file.getOriginalFilename(),
+                file
+        );
 
         mailSender.send(message);
     }

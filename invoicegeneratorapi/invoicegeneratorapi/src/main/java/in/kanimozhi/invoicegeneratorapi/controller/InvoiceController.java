@@ -4,13 +4,13 @@ import in.kanimozhi.invoicegeneratorapi.entity.Invoice;
 import in.kanimozhi.invoicegeneratorapi.service.EmailService;
 import in.kanimozhi.invoicegeneratorapi.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
     private final EmailService emailService;
 
-    // ================= SAVE INVOICE =================
+    // ================= SAVE =================
     @PostMapping
     public ResponseEntity<Invoice> saveInvoice(
             @RequestBody Invoice invoice,
@@ -36,7 +36,7 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.saveInvoice(invoice));
     }
 
-    // ================= FETCH INVOICES =================
+    // ================= FETCH =================
     @GetMapping
     public ResponseEntity<List<Invoice>> fetchInvoices(Authentication authentication) {
         if (authentication == null) {
@@ -48,7 +48,7 @@ public class InvoiceController {
         );
     }
 
-    // ================= DELETE INVOICE =================
+    // ================= DELETE =================
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeInvoice(
             @PathVariable String id,
@@ -62,7 +62,7 @@ public class InvoiceController {
         return ResponseEntity.noContent().build();
     }
 
-    // ================= SEND INVOICE EMAIL =================
+    // ================= SEND EMAIL (FIXED) =================
     @PostMapping(
             value = "/sendinvoice",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -72,26 +72,25 @@ public class InvoiceController {
             @RequestParam("email") String customerEmail,
             Authentication authentication
     ) {
-
-        // 🔍 DEBUG (keep for now)
-        System.out.println("Reached /sendinvoice endpoint");
-
         if (authentication == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
         }
 
         if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().body("File is missing");
+            return ResponseEntity.badRequest().body("File missing");
         }
 
         if (customerEmail == null || !customerEmail.contains("@")) {
-            return ResponseEntity.badRequest().body("Invalid email address");
+            return ResponseEntity.badRequest().body("Invalid email");
         }
 
         try {
-            String userId = authentication.getName();
-            emailService.sendInvoiceEmail(customerEmail, file, userId);
-            return ResponseEntity.ok("Invoice sent successfully!");
+            emailService.sendInvoiceEmail(
+                    customerEmail,
+                    file,
+                    authentication.getName()
+            );
+            return ResponseEntity.ok("Invoice sent successfully");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity
