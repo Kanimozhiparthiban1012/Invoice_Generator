@@ -1,16 +1,11 @@
 package in.kanimozhi.invoicegeneratorapi.service;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -18,22 +13,24 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.from}")
-    private String fromEmail;
-
-    public void sendInvoiceEmail(String toEmail, MultipartFile file) throws MessagingException, IOException {
+    public void sendInvoiceEmail(
+            String customerEmail,
+            MultipartFile file,
+            String clerkUserId
+    ) throws Exception {
 
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-        helper.setFrom(fromEmail, "QuickInvoice");
-        helper.setReplyTo(fromEmail);
-        helper.setTo(toEmail);
+        helper.setTo(customerEmail);
         helper.setSubject("Your Invoice");
-        helper.setText("Dear Customer,\n\nPlease find attached your invoice.\n\nThank you,\nQuickInvoice", false);
+        helper.setText(
+                "Hello,\n\nPlease find your invoice attached.\n\nSent by user: "
+                        + clerkUserId
+                        + "\n\nThank you."
+        );
 
-        String fileName = "invoice_" + System.currentTimeMillis() + ".pdf";
-        helper.addAttachment(fileName, new ByteArrayResource(file.getBytes()));
+        helper.addAttachment(file.getOriginalFilename(), file);
 
         mailSender.send(message);
     }
