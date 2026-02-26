@@ -18,29 +18,19 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // 🔥 MUST be a VERIFIED sender in Brevo
     @Value("${spring.mail.from}")
     private String fromEmail;
 
-    public void sendInvoiceEmail(String toEmail, MultipartFile file)
-            throws MessagingException, IOException {
+    public void sendInvoiceEmail(String toEmail, MultipartFile file) throws MessagingException, IOException {
 
         MimeMessage message = mailSender.createMimeMessage();
-
-        // multipart = true (important for attachment)
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        // 🔥 FIX: Explicit verified sender
         helper.setFrom(fromEmail, "QuickInvoice");
         helper.setReplyTo(fromEmail);
-
         helper.setTo(toEmail);
         helper.setSubject("Your Invoice");
-
-        helper.setText(
-                "Dear Customer,\n\nPlease find attached your invoice.\n\nThank you,\nQuickInvoice",
-                false
-        );
+        helper.setText("Dear Customer,\n\nPlease find attached your invoice.\n\nThank you,\nQuickInvoice", false);
 
         String fileName = "invoice_" + System.currentTimeMillis() + ".pdf";
         helper.addAttachment(fileName, new ByteArrayResource(file.getBytes()));

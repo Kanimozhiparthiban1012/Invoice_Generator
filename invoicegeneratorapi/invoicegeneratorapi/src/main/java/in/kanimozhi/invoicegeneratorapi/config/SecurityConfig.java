@@ -27,13 +27,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // public endpoints
                         .requestMatchers(
                                 "/", "/error",
                                 "/api/webhooks/**",
                                 "/api/auth/**",
-                                "/api/invoices/sendinvoice" // only public endpoint
+                                "/api/invoices/sendinvoice" // allow sendInvoice temporarily
                         ).permitAll()
-                        .requestMatchers("/api/invoices/**").authenticated() // secure all other invoices
+                        // secure all other invoice routes
+                        .requestMatchers("/api/invoices/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -48,9 +50,10 @@ public class SecurityConfig {
                 "http://localhost:5173", // local frontend
                 "https://invoice-generator-6.vercel.app" // deployed frontend
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

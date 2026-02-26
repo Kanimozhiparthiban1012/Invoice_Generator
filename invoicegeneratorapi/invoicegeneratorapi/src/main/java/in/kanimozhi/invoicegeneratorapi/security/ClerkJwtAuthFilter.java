@@ -31,47 +31,49 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
     private final ClerkJwksProvider jwksProvider;
 
     @Override
-
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-
+        // Exclude public endpoints
         return path.equals("/")
                 || path.startsWith("/error")
                 || path.startsWith("/api/webhooks")
                 || path.startsWith("/api/auth");
     }
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
 
-        if (request.getRequestURI().contains("/api/webhooks")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Authorization header missing/invalid");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Authorization header missing or invalid");
             return;
         }
 
         try {
             String token = authHeader.substring(7);
 
-            // extract the kid from token header
-            String[] chunks = token.split("\\.");
-            String headerJson = new String(Base64.getUrlDecoder().decode(chunks[0]));
+            // Decode JWT header to get 'kid'
+            String[] tokenParts = token.split("\\.");
+            if (tokenParts.length != 3) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Malformed JWT token");
+                return;
+            }
+
+            String headerJson = new String(Base64.getUrlDecoder().decode(tokenParts[0]));
             ObjectMapper mapper = new ObjectMapper();
             JsonNode headerNode = mapper.readTree(headerJson);
             String kid = headerNode.get("kid").asText();
 
-            // get the correct public key
+            // Get public key for this 'kid'
             PublicKey publicKey = jwksProvider.getPublicKey(kid);
 
-            // verify the token
+            // Validate token
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(publicKey)
-                    .setAllowedClockSkewSeconds(60) // allow 60 seconds
                     .requireIssuer(clerkIssuer)
                     .build()
                     .parseClaimsJws(token)
@@ -79,14 +81,19 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
 
             String clerkUserId = claims.getSubject();
 
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    clerkUserId, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+            // Set authentication
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    clerkUserId,
+                    null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")) // adjust role as needed
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             filterChain.doFilter(request, response);
-        } catch (Exception e) {
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid JWT token");
-            return;
         }
     }
 }
